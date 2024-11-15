@@ -1,18 +1,24 @@
 import networkx as nx
+from networkx.drawing.nx_agraph import to_agraph
 
-node_head = [1]
-node_neck = [2, 3, 4, 5]
-node_hips = [6, 7, 8, 9, 10, 11, 12, 13, 14]
-node_legs = [15, 16, 17, 18]
+DEADHEAD = {"color": "blue"}
+POWER = {"color": "red"}
+STRIP_END = {"color": "red", "style": "filled"}
+LAST_STRIP_END = {"color": "tomato", "style": "filled"}
 
-edge_neck = [(1, 2), (1, 3), (1, 4), (1, 5)]
+node_head = [(1, STRIP_END)]
+node_neck = [2, (3, LAST_STRIP_END), 4, 5]
+node_hips = [6, (7, STRIP_END), 8, 9, 10, 11, (12, STRIP_END), 13, 14]
+node_legs = [(15, STRIP_END), (16, STRIP_END), 17, 18]
+
+edge_neck = [(1, 2), (1, 3, POWER), (1, 4), (1, 5, POWER)]
 edge_collar = [
     (2, 3),
     (3, 4),
     (4, 5),
     (5, 2),
-    (2, 3, {"type": "wire"}),
-    (4, 5, {"type": "wire"}),
+    (2, 3, DEADHEAD),
+    (4, 5, DEADHEAD),
 ]
 
 edge_belly = [
@@ -22,7 +28,7 @@ edge_belly = [
     (2, 14),
     (2, 13),
     # down from node 3
-    (3, 7),
+    (3, 7, POWER),
     (3, 8),
     (3, 9),
     (3, 14),
@@ -33,8 +39,8 @@ edge_belly = [
     (4, 14),
     # down from node 5
     (5, 11),
-    (5, 12),
-    (5, 13),
+    (5, 12, POWER),
+    (5, 13, POWER),
     (5, 14),
 ]
 
@@ -45,10 +51,10 @@ edge_cross = [
     (9, 14),
     (11, 14),
     (13, 14),
-    (7, 14, {"type": "wire"}),
-    (9, 14, {"type": "wire"}),
-    (11, 14, {"type": "wire"}),
-    (13, 14, {"type": "wire"}),
+    (7, 14, DEADHEAD),
+    (9, 14, DEADHEAD),
+    (11, 14, DEADHEAD),
+    (13, 14, DEADHEAD),
 ]
 
 edge_legs = [
@@ -56,9 +62,9 @@ edge_legs = [
     (15, 6),
     (15, 7),
     (15, 14),
-    (15, 13),
+    (15, 13, POWER),
     # up from 16
-    (16, 7),
+    (16, 7, POWER),
     (16, 8),
     (16, 9),
     (16, 14),
@@ -103,3 +109,8 @@ for edge in nx.eulerian_circuit(sodas, keys=True):
 
     if i % 10 == 0:
         print("End of a led strip")
+
+
+viz = to_agraph(sodas)
+viz.layout('sfdp')
+viz.draw('sodas.png')
