@@ -10,5 +10,5 @@ install:
 freeze:
     pip freeze > requirements.txt
 
-run:
-    python sodai.py
+run command:
+    python sodai.py {{command}}
