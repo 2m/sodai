@@ -4,8 +4,10 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def c(x, y, z):
     return {"coords": np.array([x, y, z])}
+
 
 DEADHEAD = {"color": "blue"}
 POWER = {"color": "red"}
@@ -38,7 +40,8 @@ node_neck = [
     (2, c(-0.5, 0.866, 0.5)),
     (3, c(0.5, 0.866, 0.5)),
     (4, c(0.5, 0.866, -0.5)),
-    (5, c(-0.5, 0.866, -0.5))]
+    (5, c(-0.5, 0.866, -0.5)),
+]
 node_hips = [
     (6, c(-1, 0, 1)),
     (7, c(0, 0, 1)),
@@ -48,13 +51,13 @@ node_hips = [
     (11, c(0, 0, -1)),
     (12, c(-1, 0, -1)),
     (13, {**c(-1, 0, 0), **POWER_INJECT}),
-    (14, c(0, 0, 0))
+    (14, c(0, 0, 0)),
 ]
 node_legs = [
     (15, c(-0.5, -0.866, 0.5)),
     (16, c(0.5, -0.866, 0.5)),
     (17, c(0.5, -0.866, -0.5)),
-    (18, c(-0.5, -0.866, -0.5))
+    (18, c(-0.5, -0.866, -0.5)),
 ]
 
 edge_neck = [(1, 2), (1, 3, POWER), (1, 4), (1, 5, POWER)]
@@ -140,6 +143,7 @@ sodas.add_edges_from(edge_belt)
 sodas.add_edges_from(edge_cross)
 sodas.add_edges_from(edge_legs)
 
+
 def eul_path():
     print("Nodes:", sodas.number_of_nodes())
     print("Edges:", sodas.number_of_edges())
@@ -148,7 +152,6 @@ def eul_path():
 
     i = 0
     for edge in nx.eulerian_circuit(sodas, keys=True):
-
         if edge[2] != 1:
             i += 1
 
@@ -160,52 +163,71 @@ def eul_path():
 
 def visualize():
     viz = to_agraph(sodas)
-    viz.layout('sfdp')
-    viz.draw('sodas.png')
+    viz.layout("sfdp")
+    viz.draw("sodas.png")
     print("Graph visualized in sodas.png")
 
 
 def coordinates():
     OFFSET = 0.07
 
+    SWAPPED_ORIENTATION = [(4, 5), (7, 14), (13, 14)]
+    SIZE_FACTOR = 1.67138
+
+    ONE_LED_LESS = [(11, 18), (18, 12)]
+
     xs = []
     ys = []
     zs = []
 
-    with open('coords.csv', 'w') as coords_file:
-
-        for (start, end, deadhead) in nx.eulerian_circuit(sodas, keys=True):
+    with open("coords.csv", "w") as coords_file:
+        for start, end, deadhead in nx.eulerian_circuit(sodas, keys=True):
             if not deadhead:
                 start_coord = sodas.nodes[start]["coords"]
                 end_coord = sodas.nodes[end]["coords"]
 
+                if (start, end) in SWAPPED_ORIENTATION:
+                    start_coord, end_coord = end_coord, start_coord
+
                 direction = end_coord - start_coord
 
-                # Sample 27 points along the line
-                points = [start_coord + t * direction for t in np.linspace(0 + OFFSET, 1 - OFFSET, 27)]
-                for point in points:
-                    xs.append(point[0])
-                    ys.append(point[1])
-                    zs.append(point[2])
+                if (start, end) in ONE_LED_LESS:
+                    led_count = 26
+                else:
+                    led_count = 27
 
-                    coords_file.write(f"{point[0]},{point[1]},{point[2]}\n")
+                # Sample points along the line
+                points = [
+                    start_coord + t * direction
+                    for t in np.linspace(0 + OFFSET, 1 - OFFSET, led_count)
+                ]
+                for point in points:
+                    x = point[0] / SIZE_FACTOR
+                    y = point[1] / SIZE_FACTOR
+                    z = point[2] / SIZE_FACTOR
+
+                    xs.append(x)
+                    ys.append(y)
+                    zs.append(z)
+
+                    coords_file.write(f"{x},{y},{z}\n")
 
     fig = plt.figure()
-    viz = fig.add_subplot(projection='3d')
-    viz.scatter(xs, ys, zs, marker='o', zdir='y')
+    viz = fig.add_subplot(projection="3d")
+    viz.scatter(xs, ys, zs, marker="o", zdir="y")
     plt.show()
 
 
-parser = argparse.ArgumentParser(prog='Sodai')
+parser = argparse.ArgumentParser(prog="Sodai")
 subparsers = parser.add_subparsers(required=True)
 
-parser_eulpath = subparsers.add_parser('eulpath', help='print eulerian path')
+parser_eulpath = subparsers.add_parser("eulpath", help="print eulerian path")
 parser_eulpath.set_defaults(func=eul_path)
 
-parser_viz = subparsers.add_parser('viz', help='visualize graph')
+parser_viz = subparsers.add_parser("viz", help="visualize graph")
 parser_viz.set_defaults(func=visualize)
 
-parser_coords = subparsers.add_parser('coords', help='print coordinates')
+parser_coords = subparsers.add_parser("coords", help="print coordinates")
 parser_coords.set_defaults(func=coordinates)
 
 if __name__ == "__main__":

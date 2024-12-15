@@ -22,6 +22,7 @@
               pkgs.graphviz
               pkgs.fish
               pkgs.just
+              pkgs.git
             ];
             buildInputs = with pkgs.python3Packages; [
               networkx
